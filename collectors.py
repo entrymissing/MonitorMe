@@ -11,11 +11,13 @@ class BaseCollector(object):
 
 class RandomCollector(BaseCollector):
     def collect_data(self):
-        return random.randint(0, 100), time.time()
+        return ['', random.randint(0, 100), time.time()]
 
 class EMailCollector(BaseCollector):
   def collect_data(self):
-    resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID, private_keys.GOOGLE_CLIENT_SECRET, private_keys.GOOGLE_REFRESH_TOKEN)
+    resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
+                               private_keys.GOOGLE_CLIENT_SECRET,
+                               private_keys.GOOGLE_REFRESH_TOKEN)
     AT = resp['access_token']
     auth_string = oauth2.GenerateOAuth2String('entrymissing@gmail.com', AT, base64_encode=False)
     imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
@@ -24,9 +26,7 @@ class EMailCollector(BaseCollector):
   
     rv, data = imap_conn.search(None, "ALL")
     if rv != 'OK':
-      print "No messages found!"
       imap_conn.logout()
-      return 0
+      return ['.inbox.len', 0, time.time()]
     imap_conn.logout()
-    print data
-    return len(data[0].split()), time.time()
+    return ['.inbox.len', len(data[0].split()), time.time()]

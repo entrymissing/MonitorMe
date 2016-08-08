@@ -14,8 +14,9 @@ class Monitor(object):
     def report_data(self):
         self._last_start = time.time()
         self._done = False
-        data, ts = self._monitor.collect_data()
-        self._report_callback(self.ts_name, data, ts)
+        data = self._monitor.collect_data()
+        for name_ext, val, ts in data:
+          self._report_callback(self.ts_name + name_ext, val, ts)
         self._done = True
     
     def monitor(self):
