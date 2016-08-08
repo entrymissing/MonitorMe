@@ -1,6 +1,5 @@
 import random
 import time
-
 import oauth2
 import imaplib
 
@@ -8,7 +7,7 @@ import private_keys
 
 class BaseCollector(object):
     def collect_data(self):
-        return 0, time.time()
+        raise NotImplementedError("Subclasses should implement this!")
 
 class RandomCollector(BaseCollector):
     def collect_data(self):
