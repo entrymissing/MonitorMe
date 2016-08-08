@@ -9,7 +9,7 @@ def printerFunc(metric, data, ts):
 def submitterFunc(metric, data, ts):
   message = '%s %s %d\n' % (metric, data, ts)
   
-  print 'sending message:\n%s' % message
+  print 'sending message: %s' % message
   sock = socket.socket()
   sock.connect((settings.CARBON_SERVER, settings.CARBON_PORT))
   sock.sendall(message)
