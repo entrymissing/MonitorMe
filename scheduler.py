@@ -23,5 +23,7 @@ if __name__ == '__main__':
                                         mon['frequency'],
                                         mon['ts_name'],
                                         printerFunc))
-  for m in all_monitors:
-    m.monitor()
+  while True:
+    for m in all_monitors:
+      m.monitor()
+    time.sleep(60)
