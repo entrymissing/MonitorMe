@@ -27,6 +27,6 @@ class EMailCollector(BaseCollector):
     rv, data = imap_conn.search(None, "ALL")
     if rv != 'OK':
       imap_conn.logout()
-      return ['.inbox.len', 0, time.time()]
+      return [('.inbox.len', 0, time.time())]
     imap_conn.logout()
-    return ['.inbox.len', len(data[0].split()), time.time()]
+    return [('.inbox.len', len(data[0].split()), time.time())]
