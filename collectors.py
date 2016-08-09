@@ -61,7 +61,7 @@ class EMailCollector(BaseCollector):
     self.email = configs.get('email', '')
     self.prefix = configs.get('prefix', 'private')
 
-    def collect_data(self):
+  def collect_data(self):
     resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
                                private_keys.GOOGLE_CLIENT_SECRET,
                                private_keys.GOOGLE_REFRESH_TOKEN)
