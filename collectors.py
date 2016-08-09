@@ -57,12 +57,16 @@ class PingCollector(BaseCollector):
 
     
 class EMailCollector(BaseCollector):
-  def collect_data(self):
+  def setUp(self, configs = {}):
+    self.email = configs.get('email', '')
+    self.prefix = configs.get('prefix', 'private')
+
+    def collect_data(self):
     resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
                                private_keys.GOOGLE_CLIENT_SECRET,
                                private_keys.GOOGLE_REFRESH_TOKEN)
     AT = resp['access_token']
-    auth_string = oauth2.GenerateOAuth2String('entrymissing@gmail.com', AT, base64_encode=False)
+    auth_string = oauth2.GenerateOAuth2String(self.email, AT, base64_encode=False)
     imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
     imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
     imap_conn.select('INBOX')
