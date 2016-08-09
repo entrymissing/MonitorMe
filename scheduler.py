@@ -22,6 +22,7 @@ if __name__ == '__main__':
     all_monitors.append(monitor.Monitor(mon['monitor'],
                                         mon['frequency'],
                                         mon['ts_name'],
+                                        mon['config'],
                                         printerFunc))
   while True:
     for m in all_monitors:

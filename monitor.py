@@ -3,8 +3,8 @@ import time
 
 class Monitor(object):
     def __init__(self, monitor_name, frequency,
-                 ts_name, report_callback):
-        self._monitor = getattr(collectors, monitor_name)()
+                 ts_name, config, report_callback):
+        self._monitor = getattr(collectors, monitor_name)(config)
         self.frequency = frequency
         self.ts_name = ts_name
         self._last_start = 0
