@@ -32,7 +32,7 @@ class PingCollector(BaseCollector):
     self.num_pings = configs.get('num_pings', 5)
 
   def collect_data(self):
-    cmd = [ fping, '-c', str(self.num_pings) ] + self.ping_targets
+    cmd = [ 'fping', '-c', str(self.num_pings) ] + self.ping_targets
     ping_proc = subprocess.Popen(cmd, bufsize=256, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   
     data_points = []
