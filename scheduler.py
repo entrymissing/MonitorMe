@@ -23,7 +23,7 @@ if __name__ == '__main__':
                                         mon['frequency'],
                                         mon['ts_name'],
                                         mon['config'],
-                                        printerFunc))
+                                        submitterFunc))
   while True:
     for m in all_monitors:
       m.monitor()
