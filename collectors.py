@@ -49,10 +49,10 @@ class PingCollector(BaseCollector):
         min = float(m.group(3))
         avg = float(m.group(4))
         max = float(m.group(5))
-        data_points.append(['.' + target + '_min', min])
-        data_points.append(['.' + target + '_loss', loss])
-        data_points.append(['.' + target + '_avg', avg])
-        data_points.append(['.' + target + '_max', max])
+        data_points.append(['.' + target + '_min', min, time.time()])
+        data_points.append(['.' + target + '_loss', loss, time.time()])
+        data_points.append(['.' + target + '_avg', avg, time.time()])
+        data_points.append(['.' + target + '_max', max, time.time()])
     return data_points
 
     
