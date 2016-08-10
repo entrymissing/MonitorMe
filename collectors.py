@@ -58,8 +58,10 @@ class PingCollector(BaseCollector):
     
 class EMailCollector(BaseCollector):
   def setUp(self, configs = {}):
+    # Just copy all configs around in the base constructor
     self.email = configs.get('email', '')
     self.prefix = configs.get('prefix', 'private')
+    self.sent_folder = configs.get('sent_folder', '[GMail]/Sent Mail')
 
   def collect_data(self):
     resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
@@ -83,7 +85,7 @@ class EMailCollector(BaseCollector):
     sent_last_1h_count = 0
     sent_last_12h_count = 0
     sent_last_24h_count = 0
-    imap_conn.select('[Google Mail]/Sent Mail')
+    imap_conn.select(self.sent_folder)
     date = (datetime.date.today() - datetime.timedelta(1)).strftime("%d-%b-%Y")
     rv, data = imap_conn.uid('search', None, '(SENTSINCE {date})'.format(date=date))
     if rv == 'OK':
