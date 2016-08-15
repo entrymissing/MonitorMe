@@ -22,7 +22,7 @@ def main(argv):
   with open(argv[0], 'r') as fp:
     monitors = eval(fp.read())
 
-  print monitors
+  print argv[0], monitors
   all_monitors = []
   for mon in monitors:
     all_monitors.append(monitor.Monitor(mon['monitor'],
