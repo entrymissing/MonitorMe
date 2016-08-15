@@ -16,16 +16,16 @@ class BaseCollector(object):
 
   def setUp(self, configs):
     pass
-    
+
   def collect_data(self):
     raise NotImplementedError("Subclasses should implement this!")
 
-        
+
 class RandomCollector(BaseCollector):
   def collect_data(self):
     return ['', random.randint(0, 100), time.time()]
 
-        
+
 class PingCollector(BaseCollector):
   MAX_LINES = 1000
 
@@ -36,9 +36,9 @@ class PingCollector(BaseCollector):
   def collect_data(self):
     cmd = [ 'fping', '-c', str(self.num_pings) ] + self.ping_targets
     ping_proc = subprocess.Popen(cmd, bufsize=256, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  
+
     data_points = []
-  
+
     for l in range(self.MAX_LINES):
       raw_line = ping_proc.stdout.readline()
       if raw_line == '':
@@ -55,13 +55,13 @@ class PingCollector(BaseCollector):
         data_points.append(['.' + target + '_avg', avg, time.time()])
     return data_points
 
-    
+
 class EMailCollector(BaseCollector):
   def setUp(self, configs = {}):
     # Just copy all configs around in the base constructor
     self.email = configs.get('email', '')
     self.prefix = configs.get('prefix', 'private')
-    self.sent_folder = configs.get('sent_folder', '[GMail]/Sent Mail')
+    self.sent_folder = configs.get('sent_folder', '[Google Mail]/Sent Mail')
 
   def collect_data(self):
     resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
