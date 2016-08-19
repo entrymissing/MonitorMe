@@ -7,6 +7,7 @@ import subprocess
 import datetime
 import email
 
+import google_api_lib
 import private_keys
 
 
@@ -19,11 +20,6 @@ class BaseCollector(object):
 
   def collect_data(self):
     raise NotImplementedError("Subclasses should implement this!")
-
-
-class RandomCollector(BaseCollector):
-  def collect_data(self):
-    return ['', random.randint(0, 100), time.time()]
 
 
 class PingCollector(BaseCollector):
@@ -54,6 +50,22 @@ class PingCollector(BaseCollector):
         data_points.append(['.' + target + '_loss', loss, time.time()])
         data_points.append(['.' + target + '_avg', avg, time.time()])
     return data_points
+
+
+class CalendarCollector(BaseCollector):
+  def setUp(self, configs = {}):
+    self.locations = configs.get('locations', ['work', 'home'])
+
+  def collect_data(self):
+    service = google_api_lib.connect_to_api()
+    res = google_api_lib.get_last_location(service)
+    data = []
+    for loc in self.locations:
+      if res and res[0] == 'entered' and res[1] == loc:
+        data.append(('.location.' + loc, 1, res[2]))
+      else:
+        data.append(('.location.' + loc, 0, res[2]))
+    return data
 
 
 class EMailCollector(BaseCollector):

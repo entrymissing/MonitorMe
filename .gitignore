@@ -1,7 +1,8 @@
 # Private Keys
 private_keys.py
-settings_gce.py
-settings_work.py
+settings_*.py
+client_secret.json
+testing/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
