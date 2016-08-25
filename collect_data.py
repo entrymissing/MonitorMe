@@ -15,7 +15,8 @@ def submitterFunc(metric, data, ts):
   sock = socket.socket()
   sock.connect((private_keys.CARBON_SERVER,
                 private_keys.CARBON_PORT))
-  sock.sendall(message)
+  sock.sendto(message.encode(), (private_keys.CARBON_SERVER,
+                                 private_keys.CARBON_PORT))
   sock.close()
 
 def main(argv):

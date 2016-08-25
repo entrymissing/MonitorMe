@@ -77,5 +77,5 @@ class EMailCollector(BaseCollector):
     res = google_api_lib.get_gmail_length_of_query()
     data_points = []
     for r in res:
-      data_points.append((self.prefix + r[0], r[1], r[2]))
+      data_points.append((self.prefix + '.' + r[0], r[1], r[2]))
     return data_points
