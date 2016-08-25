@@ -1,6 +1,5 @@
 import random
 import time
-import oauth2
 import imaplib
 import re
 import subprocess
@@ -57,8 +56,7 @@ class CalendarCollector(BaseCollector):
     self.locations = configs.get('locations', ['work', 'home'])
 
   def collect_data(self):
-    service = google_api_lib.connect_to_api()
-    res = google_api_lib.get_last_location(service)
+    res = google_api_lib.get_last_location()
     data = []
     for loc in self.locations:
       if res and res[0] == 'entered' and res[1] == loc:
@@ -76,45 +74,8 @@ class EMailCollector(BaseCollector):
     self.sent_folder = configs.get('sent_folder', '[Google Mail]/Sent Mail')
 
   def collect_data(self):
-    resp = oauth2.RefreshToken(private_keys.GOOGLE_CLIENT_ID,
-                               private_keys.GOOGLE_CLIENT_SECRET,
-                               private_keys.GOOGLE_REFRESH_TOKEN)
-    AT = resp['access_token']
-    auth_string = oauth2.GenerateOAuth2String(self.email, AT, base64_encode=False)
-    imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
-    imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
-
+    res = google_api_lib.get_gmail_length_of_query()
     data_points = []
-
-    imap_conn.select('INBOX')
-    rv, data = imap_conn.search(None, "ALL")
-    if rv != 'OK':
-      inbox_size = 0
-    else:
-      inbox_size = len(data[0].split())
-    data_points.append((self.prefix + '.inbox_size', inbox_size, time.time()))
-
-    sent_last_1h_count = 0
-    sent_last_12h_count = 0
-    sent_last_24h_count = 0
-    imap_conn.select(self.sent_folder)
-    date = (datetime.date.today() - datetime.timedelta(1)).strftime("%d-%b-%Y")
-    rv, data = imap_conn.uid('search', None, '(SENTSINCE {date})'.format(date=date))
-    if rv == 'OK':
-      for uids in data:
-        for u in uids.split():
-          type, content = imap_conn.uid('fetch', u, '(RFC822)')
-          curMail = email.message_from_string(content[0][1])
-          mail_ts = time.mktime(email.utils.parsedate(curMail['Date']))
-          if (time.time() - mail_ts) < 60 * 60 * 24:
-            sent_last_24h_count += 1
-          if (time.time() - mail_ts) < 60 * 60 * 12:
-            sent_last_12h_count += 1
-          if (time.time() - mail_ts) < 60 * 60 * 1:
-            sent_last_1h_count += 1
-    data_points.append((self.prefix + '.sent_last_1h', sent_last_1h_count, time.time()))
-    data_points.append((self.prefix + '.sent_last_12h', sent_last_12h_count, time.time()))
-    data_points.append((self.prefix + '.sent_last_24h', sent_last_24h_count, time.time()))
-
-    imap_conn.logout()
+    for r in res:
+      data_points.append((self.prefix + r[0], r[1], r[2]))
     return data_points

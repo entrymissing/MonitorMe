@@ -2,6 +2,7 @@ import httplib2
 import os
 
 from apiclient import discovery
+from apiclient import errors
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
@@ -20,7 +21,8 @@ import private_keys
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+SCOPES = ('https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/gmail.readonly')
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'MonitorMe'
 
@@ -39,7 +41,7 @@ def get_credentials():
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
-                                   'calendar.json')
+                                   'google-api.json')
 
     store = oauth2client.file.Storage(credential_path)
     credentials = store.get()
@@ -65,14 +67,16 @@ def get_calendar_by_name(service, name):
         break
     return None
 
-def connect_to_api():
+def connect_to_api(name, version):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
+    service = discovery.build(name, version, http=http)
     
     return service
 
-def get_last_location(service, calendar_name = 'Tracking'):
+def get_last_location(calendar_name = 'Tracking'):
+  service = connect_to_api('calendar', 'v3')
+  
   # Find the right calendar
   calendar_id = get_calendar_by_name(service, 'Tracking')
 
@@ -110,10 +114,67 @@ def get_last_location(service, calendar_name = 'Tracking'):
     yesterday = now - datetime.timedelta(hours = 24)
     return lastState, location, yesterday.timestamp()
 
-#def main():
-#  service = connect_to_api()
-#  res = get_last_location(service)
-#  print(res)
+def ListMessagesMatchingQuery(service, user_id, query=''):
+  """List all Messages of the user's mailbox matching the query.
 
-#if __name__ == '__main__':
-#    main()
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    query: String used to filter messages returned.
+    Eg.- 'from:user@some_domain.com' for Messages from a particular sender.
+
+  Returns:
+    List of Messages that match the criteria of the query. Note that the
+    returned list contains Message IDs, you must use get with the
+    appropriate ID to get the details of a Message.
+  """
+  try:
+    response = service.users().messages().list(userId=user_id,
+                                               q=query).execute()
+    messages = []
+    if 'messages' in response:
+      messages.extend(response['messages'])
+
+    while 'nextPageToken' in response:
+      page_token = response['nextPageToken']
+      response = service.users().messages().list(userId=user_id, q=query,
+                                         pageToken=page_token).execute()
+      messages.extend(response['messages'])
+    return messages
+  except errors.HttpError as error:
+    print('An error occurred: %s' % error)
+
+def get_gmail_length_of_query():
+  service = connect_to_api('gmail', 'v1')
+  
+  data = []
+  now = datetime.datetime.now().timestamp()
+  
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:inbox')
+  thread_ids = [m['threadId'] for m in mails]
+  data.append(('inbox_size', len(thread_ids), now))
+
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:24h')
+  thread_ids = [m['threadId'] for m in mails]
+  data.append(('sent_last_24h', len(thread_ids), now))
+
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:12h')
+  thread_ids = [m['threadId'] for m in mails]
+  data.append(('sent_last_12h', len(thread_ids), now))
+
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:1h')
+  thread_ids = [m['threadId'] for m in mails]
+  data.append(('sent_last_1h', len(thread_ids), now))
+
+  return data
+  
+def main():
+  print(get_gmail_length_of_query())
+  #service = connect_to_api('calendar', 'v3')
+  #res = get_last_location(service)
+  #print(res)
+
+
+if __name__ == '__main__':
+  main()
