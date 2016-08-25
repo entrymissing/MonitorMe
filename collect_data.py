@@ -10,8 +10,8 @@ def printerFunc(metric, data, ts):
 
 def submitterFunc(metric, data, ts):
   message = '%s %s %d\n' % (metric, data, ts)
-  
-  print('sending message: %s' % message, end='')
+
+  print('sending message: %s' % message)
   sock = socket.socket()
   sock.connect((private_keys.CARBON_SERVER,
                 private_keys.CARBON_PORT))
@@ -21,7 +21,7 @@ def submitterFunc(metric, data, ts):
 def main(argv):
   with open(argv[0], 'r') as fp:
     monitors = eval(fp.read())
-    
+
   if len(argv) > 1:
     func = printerFunc
   else:
@@ -33,8 +33,8 @@ def main(argv):
                              mon['frequency'],
                              mon['ts_name'],
                              mon['config'],
-                             func))
-    corMon.monitor()
+                             func)
+    curMon.monitor()
 
 if __name__ == '__main__':
   main(sys.argv[1:])
