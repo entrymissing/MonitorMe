@@ -107,7 +107,6 @@ def get_last_location(calendar_name = 'Tracking'):
       # We are only looking for the latest location event
       if newTs > ts:
         ts = newTs
-        print(event['summary'])
         lastState = event['summary'].split()[3]
         location = event['summary'].split()[2]
     
