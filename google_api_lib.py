@@ -6,6 +6,7 @@ from apiclient import errors
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
+from collections import defaultdict
 
 import datetime
 import time
@@ -106,6 +107,7 @@ def get_last_location(calendar_name = 'Tracking'):
       # We are only looking for the latest location event
       if newTs > ts:
         ts = newTs
+        print(event['summary'])
         lastState = event['summary'].split()[3]
         location = event['summary'].split()[2]
     
@@ -145,6 +147,25 @@ def ListMessagesMatchingQuery(service, user_id, query=''):
   except errors.HttpError as error:
     print('An error occurred: %s' % error)
 
+def GetMessage(service, user_id, msg_id):
+  """Get a Message with given ID.
+
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    msg_id: The ID of the Message required.
+
+  Returns:
+    A Message.
+  """
+  try:
+    message = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    return message
+  except errors.HttpError as error:
+    print('An error occurred: %s' % error)
+
+    
 def get_gmail_length_of_query():
   service = connect_to_api('gmail', 'v1')
   
@@ -153,24 +174,44 @@ def get_gmail_length_of_query():
   
   mails = ListMessagesMatchingQuery(service, 'me', 'in:inbox')
   thread_ids = [m['threadId'] for m in mails]
-  data.append(('inbox_size', len(thread_ids), now))
+  data.append(('inbox_size', len(set(thread_ids)), now))
 
   mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:24h')
   thread_ids = [m['threadId'] for m in mails]
-  data.append(('sent_last_24h', len(thread_ids), now))
+  data.append(('sent_last_24h', len(set(thread_ids)), now))
 
   mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:12h')
   thread_ids = [m['threadId'] for m in mails]
-  data.append(('sent_last_12h', len(thread_ids), now))
+  data.append(('sent_last_12h', len(set(thread_ids)), now))
 
   mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:1h')
   thread_ids = [m['threadId'] for m in mails]
-  data.append(('sent_last_1h', len(thread_ids), now))
+  data.append(('sent_last_1h', len(set(thread_ids)), now))
 
   return data
   
+def get_oldest_inbox_mail():
+  service = connect_to_api('gmail', 'v1')
+  
+  now = datetime.datetime.now().timestamp()
+  
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:inbox')
+  thread_age = {}
+  for m in mails:
+    thread_id = m['threadId']
+    msg = GetMessage(service, 'me', m['id'])
+    age = now - (int(msg['internalDate'])/1000)
+    if thread_id not in thread_age:
+      thread_age[thread_id] = age
+    else:
+      if age < thread_age[thread_id]:
+        thread_age[thread_id] = age
+  
+  return [('inbox_oldest', max(thread_age.values()), now)]
+  
+  
 def main():
-  print(get_gmail_length_of_query())
+  print(get_oldest_inbox_mail())
   #service = connect_to_api('calendar', 'v3')
   #res = get_last_location(service)
   #print(res)

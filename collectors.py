@@ -75,6 +75,7 @@ class EMailCollector(BaseCollector):
 
   def collect_data(self):
     res = google_api_lib.get_gmail_length_of_query()
+    res.extend(google_api_lib.get_oldest_inbox_mail())
     data_points = []
     for r in res:
       data_points.append((self.prefix + '.' + r[0], r[1], r[2]))
