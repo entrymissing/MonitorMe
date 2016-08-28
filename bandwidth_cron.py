@@ -6,7 +6,7 @@ import os
 import private_keys
 
 DATA_FILE = 'C:\\Users\\David\\Dropbox\\Projects\\MonitorMe\\data\\bw_data.pkl'
-METRIC_PREFIX = 'testing.net.desktop.'
+METRIC_PREFIX = 'data.net.desktop.'
 MAX_DB_TIME = 7 * 60
 
 def pull_data():
@@ -23,10 +23,10 @@ def get_data():
     
     # Check if there is a data disconuity
     if now - data['ts'] > MAX_DB_TIME:
-      data_points.append((METRIC_PREFIX + 'in', 0, data['ts'] + 60))
-      data_points.append((METRIC_PREFIX + 'out', 0, data['ts'] + 60))
-      data_points.append((METRIC_PREFIX + 'in', 0, now - 60))
-      data_points.append((METRIC_PREFIX + 'out', 0, now - 60))
+      data_points.append((METRIC_PREFIX + 'in', 0, data['ts'] + 120))
+      data_points.append((METRIC_PREFIX + 'out', 0, data['ts'] + 120))
+      data_points.append((METRIC_PREFIX + 'in', 0, now - 120))
+      data_points.append((METRIC_PREFIX + 'out', 0, now - 120))
       data = {}
   
   # Fake historic data by counting next 10 seconds
