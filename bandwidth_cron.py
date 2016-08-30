@@ -29,13 +29,15 @@ def get_data():
       data_points.append((METRIC_PREFIX + 'out', 0, now - 120))
       data = {}
   
-  # Fake historic data by counting next 10 seconds
+  # If we don't have data or the last dump has been too long just write what we have
   if not data:
     sent, recv = pull_data()
     data['ts'] = now
     data['sent_bytes'] = sent
     data['recv_bytes'] = recv
-    time.sleep(10)
+    pkl.dump(data, open(DATA_FILE, 'wb'))
+    return data_points
+    
 
   # Get current data and com
   sent, recv = pull_data()
