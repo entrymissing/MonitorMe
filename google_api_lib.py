@@ -196,6 +196,10 @@ def get_oldest_inbox_mail():
   
   mails = ListMessagesMatchingQuery(service, 'me', 'in:inbox')
   thread_age = {}
+
+  if len(mails) == 0:
+    return [('inbox_oldest', 0, now)]
+
   for m in mails:
     thread_id = m['threadId']
     msg = GetMessage(service, 'me', m['id'])
@@ -205,7 +209,7 @@ def get_oldest_inbox_mail():
     else:
       if age < thread_age[thread_id]:
         thread_age[thread_id] = age
-  
+
   return [('inbox_oldest', max(thread_age.values()), now)]
   
   
