@@ -91,7 +91,7 @@ def get_last_location(calendar_name = 'Tracking'):
   
   # Get all location entries between 3 days ago and yesterday
   eventsResult = service.events().list(
-      calendarId=calendar_id, timeMin=ndays, timeMax=yesterday, q='| Location', singleEvents=True,
+      calendarId=calendar_id, timeMin=ndays, timeMax=yesterday, q='Location', singleEvents=True,
       orderBy='startTime').execute()
   events = eventsResult.get('items', [])
   
@@ -107,8 +107,8 @@ def get_last_location(calendar_name = 'Tracking'):
       # We are only looking for the latest location event
       if newTs > ts:
         ts = newTs
-        lastState = event['summary'].split()[3]
-        location = event['summary'].split()[2]
+        lastState = event['summary'].split()[-1]
+        location = event['summary'].split()[-2]
     
     # Return the timestamp 24h ago, the event and the location
     now = datetime.datetime.now()
