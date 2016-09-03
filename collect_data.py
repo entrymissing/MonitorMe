@@ -1,6 +1,5 @@
 import socket
 import sys
-import time
 
 import monitor
 import private_keys
