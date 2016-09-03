@@ -72,10 +72,11 @@ def submitterFunc(metric, data, ts):
   sock.close()
 
 def main():
-  data_points = get_data()
-  print(data_points)
-  for d in data_points:
-    submitterFunc(d[0], d[1], d[2]) 
+  for i in range(12*24):
+    data_points = get_data()
+    for d in data_points:
+      submitterFunc(d[0], d[1], d[2]) 
+    time.sleep(60*5)
   
 if __name__ == '__main__':
   main()
