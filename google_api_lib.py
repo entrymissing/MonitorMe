@@ -1,3 +1,5 @@
+import collections
+import functools
 import httplib2
 import os
 
@@ -6,13 +8,39 @@ from apiclient import errors
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
-from collections import defaultdict
 
 import datetime
 import time
 import dateutil.parser
 import socket
 import private_keys
+
+
+class memoized(object):
+   '''Decorator. Caches a function's return value each time it is called.
+   If called later with the same arguments, the cached value is returned
+   (not reevaluated).
+   '''
+   def __init__(self, func):
+      self.func = func
+      self.cache = {}
+   def __call__(self, *args):
+      if not isinstance(args, collections.Hashable):
+         # uncacheable. a list, for instance.
+         # better to not cache than blow up.
+         return self.func(*args)
+      if args in self.cache:
+         return self.cache[args]
+      else:
+         value = self.func(*args)
+         self.cache[args] = value
+         return value
+   def __repr__(self):
+      '''Return the function's docstring.'''
+      return self.func.__doc__
+   def __get__(self, obj, objtype):
+      '''Support instance methods.'''
+      return functools.partial(self.__call__, obj)
 
 #try:
 #    import argparse
@@ -68,6 +96,7 @@ def get_calendar_by_name(service, name):
         break
     return None
 
+@memoized
 def connect_to_api(name, version):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
@@ -75,11 +104,101 @@ def connect_to_api(name, version):
     
     return service
 
+def combined_time_for_query(num_days = 7, query = 'Social', calendar_name = 'Tracking'):
+  service = connect_to_api('calendar', 'v3')
+  
+  # Find the right calendar
+  calendar_id = get_calendar_by_name(service, calendar_name)
+
+  # Compute some timestamps
+  now = datetime.datetime.utcnow()
+  ndays = now - datetime.timedelta(hours = 24*num_days)
+  # 'Z' indicates UTC time
+  now = now.isoformat() + 'Z'
+  ndays = ndays.isoformat() + 'Z'
+
+  # Get all location entries between 3 days ago and yesterday
+  eventsResult = service.events().list(
+      calendarId=calendar_id, timeMin=ndays, timeMax=now, q=query, singleEvents=True,
+      orderBy='startTime').execute()
+  events = eventsResult.get('items', [])
+  duration = 0
+  for event in events:
+    startTs = event['start'].get('dateTime', event['start'].get('date'))
+    startTs = dateutil.parser.parse(startTs).timestamp()
+    endTs = event['end'].get('dateTime', event['end'].get('date'))
+    endTs = dateutil.parser.parse(endTs).timestamp()
+    duration += (endTs - startTs)
+   
+  return duration
+    
+    
+def time_spent_at_locations(num_days = 7, calendar_name = 'Tracking'):
+  service = connect_to_api('calendar', 'v3')
+  
+  # Find the right calendar
+  calendar_id = get_calendar_by_name(service, calendar_name)
+
+  # Compute some timestamps
+  now = datetime.datetime.utcnow()
+  ndays = now - datetime.timedelta(hours = 24*num_days)
+  # 'Z' indicates UTC time
+  now = now.isoformat() + 'Z'
+  ndays = ndays.isoformat() + 'Z'
+
+  # Get all location entries between 3 days ago and yesterday
+  eventsResult = service.events().list(
+      calendarId=calendar_id, timeMin=ndays, timeMax=now, q='Location', singleEvents=True,
+      orderBy='startTime').execute()
+  events = eventsResult.get('items', [])
+
+  data = collections.defaultdict(int)
+  openTrack = False
+  for event in events:
+    # Get time as timestamp
+    curTs = event['start'].get('dateTime', event['start'].get('date'))
+    curTs = dateutil.parser.parse(curTs).timestamp()
+    curState = event['summary'].split()[-1]
+    curLocation = event['summary'].split()[-2]
+    
+    if openTrack:
+      data[openLocation] += (curTs-openTs)
+      openTrack = False
+    
+    if curState == 'entered':
+      openTrack = True
+      openTs = curTs
+      openLocation = curLocation
+
+  return data
+
+
+def count_calendar_events_days(query, num_days = 7, calendar_name = 'Tracking'):
+  service = connect_to_api('calendar', 'v3')
+  
+  # Find the right calendar
+  calendar_id = get_calendar_by_name(service, calendar_name)
+
+  # Compute some timestamps
+  now = datetime.datetime.utcnow()
+  ndays = now - datetime.timedelta(hours = 24*num_days)
+  # 'Z' indicates UTC time
+  now = now.isoformat() + 'Z'
+  ndays = ndays.isoformat() + 'Z'
+
+  # Get all location entries between 3 days ago and yesterday
+  eventsResult = service.events().list(
+      calendarId=calendar_id, timeMin=ndays, timeMax=now, q=query, singleEvents=True,
+      orderBy='startTime').execute()
+  events = eventsResult.get('items', [])
+  return len(events)
+  
+  
 def get_last_location(calendar_name = 'Tracking'):
   service = connect_to_api('calendar', 'v3')
   
   # Find the right calendar
-  calendar_id = get_calendar_by_name(service, 'Tracking')
+  calendar_id = get_calendar_by_name(service, calendar_name)
 
   # Compute some timestamps
   now = datetime.datetime.utcnow()
@@ -214,11 +333,13 @@ def get_oldest_inbox_mail():
   
   
 def main():
-  print(get_oldest_inbox_mail())
-  #service = connect_to_api('calendar', 'v3')
-  #res = get_last_location(service)
-  #print(res)
-
-
+  #print(get_oldest_inbox_mail())
+  #print(get_last_location())
+  #print(count_calendar_events_days('Social', num_days = 7))
+  #print(count_calendar_events_days('Social', num_days = 9))
+  #print(time_spent_at_locations())
+  #print(time_spent_at_locations(1))
+  print(combined_time_for_query())
+  print(combined_time_for_query(num_days=2))
 if __name__ == '__main__':
   main()

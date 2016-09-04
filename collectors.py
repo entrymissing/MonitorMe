@@ -51,13 +51,30 @@ class PingCollector(BaseCollector):
 
 class CalendarCollector(BaseCollector):
   def collect_data(self):
-    res = google_api_lib.get_last_location()
     data = []
+
+    res = google_api_lib.get_last_location()
     for loc in self.configs['locations']:
       if res and res[0] == 'entered' and res[1] == loc:
-        data.append(('.location.' + loc, self.sec_since_last_collect, res[2]))
+        data.append(('.current_location.' + loc, self.sec_since_last_collect, res[2]))
       else:
-        data.append(('.location.' + loc, 0, res[2]))
+        data.append(('.current_location.' + loc, 0, res[2]))
+    
+    res = google_api_lib.time_spent_at_locations()
+    for loc in self.configs['locations']:
+      if loc in res:
+        data.append(('.time_at_7d.' + loc, res[loc], time.time()))
+      else:
+        data.append(('.time_at_7d.' + loc, 0, time.time()))
+    
+    res = google_api_lib.count_calendar_events_days('Social', num_days = 7)
+    data.append(('.num_social_7d', res, time.time()))
+    res = google_api_lib.combined_time_for_query(query = 'Social')
+    data.append(('.time_social_7d', res, time.time()))
+
+    res = google_api_lib.count_calendar_events_days('Awesome', num_days = 7)
+    data.append(('.num_awesome_7d', res, time.time()))
+    
     return data
 
 
