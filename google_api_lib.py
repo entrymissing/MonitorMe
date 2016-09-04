@@ -142,14 +142,15 @@ def time_spent_at_locations(num_days = 7, calendar_name = 'Tracking'):
   # Compute some timestamps
   now = datetime.datetime.utcnow()
   nowTs = datetime.datetime.utcnow().timestamp()
-  ndays = now - datetime.timedelta(hours = 24*(num_days+3))
+  ndaysTs = (now - datetime.timedelta(hours = 24*(num_days))).timestamp()
+  ndays_slack = now - datetime.timedelta(hours = 24*(num_days+3))
   # 'Z' indicates UTC time
   now = now.isoformat() + 'Z'
-  ndays = ndays.isoformat() + 'Z'
+  ndays_slack = ndays_slack.isoformat() + 'Z'
 
   # Get all location entries between 3 days ago and yesterday
   eventsResult = service.events().list(
-      calendarId=calendar_id, timeMin=ndays, timeMax=now, q='Location', singleEvents=True,
+      calendarId=calendar_id, timeMin=ndays_slack, timeMax=now, q='Location', singleEvents=True,
       orderBy='startTime').execute()
   events = eventsResult.get('items', [])
 
@@ -158,7 +159,7 @@ def time_spent_at_locations(num_days = 7, calendar_name = 'Tracking'):
   for event in events:
     # Get time as timestamp
     curTs = event['start'].get('dateTime', event['start'].get('date'))
-    curTs = max(nowTs, dateutil.parser.parse(curTs).timestamp())
+    curTs = max(ndaysTs, dateutil.parser.parse(curTs).timestamp())
     curState = event['summary'].split()[-1]
     curLocation = event['summary'].split()[-2]
     
