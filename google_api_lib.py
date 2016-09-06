@@ -297,13 +297,13 @@ def get_gmail_length_of_query():
   thread_ids = [m['threadId'] for m in mails]
   data.append(('inbox_size', len(set(thread_ids)), now))
 
+  mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:7d')
+  thread_ids = [m['threadId'] for m in mails]
+  data.append(('sent_last_7d', len(set(thread_ids)), now))
+
   mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:24h')
   thread_ids = [m['threadId'] for m in mails]
   data.append(('sent_last_24h', len(set(thread_ids)), now))
-
-  mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:12h')
-  thread_ids = [m['threadId'] for m in mails]
-  data.append(('sent_last_12h', len(set(thread_ids)), now))
 
   mails = ListMessagesMatchingQuery(service, 'me', 'in:sent newer_than:1h')
   thread_ids = [m['threadId'] for m in mails]
