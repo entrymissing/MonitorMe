@@ -162,7 +162,7 @@ def time_spent_at_locations(num_days = 7, calendar_name = 'Tracking'):
     curTs = max(ndaysTs, dateutil.parser.parse(curTs).timestamp())
     curState = event['summary'].split()[-1]
     curLocation = event['summary'].split()[-2]
-    
+
     if openTrack:
       if curTs > openTs:
         data[openLocation] += (curTs-openTs)
@@ -172,6 +172,13 @@ def time_spent_at_locations(num_days = 7, calendar_name = 'Tracking'):
       openTrack = True
       openTs = curTs
       openLocation = curLocation
+
+    if curState == 'exited':
+      openTrack = False
+  
+  # Add the open remainder if there is any
+  if openTrack:
+    data[openLocation] += (nowTs-openTs)
 
   return data
 
@@ -340,9 +347,9 @@ def main():
   #print(get_last_location())
   #print(count_calendar_events_days('Social', num_days = 7))
   #print(count_calendar_events_days('Social', num_days = 9))
-  #print(time_spent_at_locations())
+  print(time_spent_at_locations())
   #print(time_spent_at_locations(1))
-  print(combined_time_for_query())
-  print(combined_time_for_query(num_days=2))
+  #print(combined_time_for_query())
+  #print(combined_time_for_query(num_days=2))
 if __name__ == '__main__':
   main()
