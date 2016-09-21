@@ -5,6 +5,9 @@ import re
 import subprocess
 import datetime
 import email
+import gzip
+import os
+import pickle as pkl
 
 import google_api_lib
 import private_keys
@@ -14,13 +17,112 @@ class BaseCollector(object):
   def __init__(self, configs = {}, sec_since_last_collect = 60*5):
     self.configs = configs
     self.sec_since_last_collect = sec_since_last_collect
+
+    # Load data for this class. If it doesn't exist init it.
+    if not os.path.exists(self.get_storage_filename()):
+      self.stored_data = self.init_storage_type()
+    else:
+      with gzip.open(self.get_storage_filename(), 'rb') as fp:
+        self.stored_data = pkl.load(fp)
+
     self.setUp()
+
+  def init_storage_type(self):
+    return []
+  
+  def get_storage_filename(self):
+    return 'data/%s.zip' % type(self).__name__
+  
+  def dump_data(self):
+    with gzip.open(self.get_storage_filename(), 'wb') as fp:
+      pkl.dump(self.stored_data, fp)
 
   def setUp(self):
     pass
 
   def collect_data(self):
     raise NotImplementedError("Subclasses should implement this!")
+
+
+class BandwidthDesktopCollector(BaseCollector):
+  def setUp(self):
+    
+    # Time after which we crop data from the local db
+    self.MAX_DB_AGE = 14 * 24 * 3600
+    
+    # Time after which we consider it to be a discontinuity and a gap in data (i.e. the machine was off)
+    self.GAP_TIME = 10 * 60
+    
+    # The prefix for this machine
+    self.METRIC_PREFIX = '.desktop.'
+    
+    # Threshold at which we consider it as distraction (100 kByte)
+    self.STREAM_THRESHOLD = 100 * 1024
+
+  def init_storage_type(self):
+    return {'last_raw_data': (0, 0, 0),
+            'data': []}
+
+  def pull_data(self):
+    # Import the lib that may not be present everywhere
+    import psutil
+
+    psdata = psutil.net_io_counters(pernic=True)
+    return psdata['Wi-Fi'][0], psdata['Wi-Fi'][1]
+
+  def collect_data(self):
+    # The return struct
+    data_points = []
+
+    # Grab data and precomputed values
+    now = time.time()
+    sent, recv = self.pull_data()
+    latest_ts, latest_sent, latest_recv = self.stored_data['last_raw_data']
+    
+    # Add, prune and store the new raw data
+    self.stored_data['last_raw_data'] = (now, sent, recv)
+    while len(self.stored_data['data']) and (now - self.stored_data['data'][0][2]) > self.MAX_DB_AGE:
+      self.stored_data['data'].pop(0)
+    
+    # Detect a discontinuity and set the values around that event to 0
+    if (now - latest_ts) > self.GAP_TIME:
+      data_points.append((self.METRIC_PREFIX + 'in', 0, latest_ts + self.GAP_TIME/2))
+      data_points.append((self.METRIC_PREFIX + 'out', 0, latest_ts + self.GAP_TIME/2))
+      data_points.append((self.METRIC_PREFIX + 'in', 0, now))
+      data_points.append((self.METRIC_PREFIX + 'out', 0, now))
+      
+      # Store, dump and return
+      self.stored_data['data'].extend(data_points)
+      self.dump_data()
+      return data_points
+  
+    # Calculate the bandwidth usage since the last timestamp in Bytes oer second
+    time_diff = now - latest_ts
+    sent_bytes = (sent - latest_sent) / time_diff
+    recv_bytes = (recv - latest_recv) / time_diff
+    
+    # Check for a recv_ or send_ overflow
+    if sent_bytes < 0 or recv_bytes < 0:
+      return data_points
+    
+    # Store and dump
+    data_points.append((self.METRIC_PREFIX + 'in', recv_bytes, now))
+    data_points.append((self.METRIC_PREFIX + 'out', sent_bytes, now))
+    self.stored_data['data'].extend(data_points)
+    self.dump_data()
+    
+    # Compute the amount of time above threshold in last week
+    time_above_threshold = 0
+    last_ts = self.stored_data['data'][0][2]
+    for d in self.stored_data['data']:
+      # Did the data point happen in the last week
+      if (now - d[2]) < 7 * 24 * 60 *60:
+        if d[0].endswith('in'):
+          if d[1] > self.STREAM_THRESHOLD:
+            time_above_threshold += (d[2] - last_ts)
+      last_ts = d[2]
+    data_points.append((self.METRIC_PREFIX + 'consuming_7d', time_above_threshold, now))
+    return data_points
 
 
 class PingCollector(BaseCollector):

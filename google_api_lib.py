@@ -347,9 +347,10 @@ def main():
   #print(get_last_location())
   #print(count_calendar_events_days('Social', num_days = 7))
   #print(count_calendar_events_days('Social', num_days = 9))
-  print(time_spent_at_locations())
+  #print(time_spent_at_locations())
   #print(time_spent_at_locations(1))
   #print(combined_time_for_query())
-  #print(combined_time_for_query(num_days=2))
+  print(combined_time_for_query(num_days=2))
+
 if __name__ == '__main__':
   main()
