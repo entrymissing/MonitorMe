@@ -44,9 +44,8 @@ class BaseCollector(object):
     raise NotImplementedError("Subclasses should implement this!")
 
 
-class BandwidthDesktopCollector(BaseCollector):
+class BandwidthPsutilCollector(BaseCollector):
   def setUp(self):
-    
     # Time after which we crop data from the local db
     self.MAX_DB_AGE = 14 * 24 * 3600
     
@@ -125,6 +124,20 @@ class BandwidthDesktopCollector(BaseCollector):
     return data_points
 
 
+class BandwidthNetstatCollector(BandwidthPsutilCollector):
+  def pull_data(self):
+    netstat = subprocess.Popen(['netstat', '-ibI', 'en0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stat_line = netstat.stdout.readlines()[1]
+    in_bytes = float(stat_line.split()[6])
+    out_bytes = float(stat_line.split()[7])
+    return sent_bytes, recv_bytes
+
+  def setUp(self):
+    super(BandwidthNetstatCollector, self).setUp()
+    # Overwrite prefix for this machine
+    self.METRIC_PREFIX = '.laptop.'
+
+    
 class PingCollector(BaseCollector):
   MAX_LINES = 1000
 

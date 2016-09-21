@@ -1,6 +1,5 @@
 # Project specific files
 private_keys.py
-settings_*.py
 client_secret.json
 testing/
 cron.bat
