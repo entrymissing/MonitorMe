@@ -122,7 +122,7 @@ class BandwidthPsutilCollector(BaseCollector):
             time_above_threshold_7d += (d[2] - last_ts)
           
             # Did the datapoint happen today
-            if day_today == datetime.datetime.fromtimestamp(d[2]).day
+            if day_today == datetime.datetime.fromtimestamp(d[2]).day:
               time_above_threshold_today += (d[2] - last_ts)
       
       last_ts = d[2]
