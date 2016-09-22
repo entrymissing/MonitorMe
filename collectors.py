@@ -1,17 +1,13 @@
-import random
-import time
-import imaplib
-import re
-import subprocess
 import datetime
-import email
 import gzip
+import re
 import os
 import pickle as pkl
+import subprocess
+import time
 
 import google_api_lib
 import private_keys
-
 
 class BaseCollector(object):
   def __init__(self, configs = {}, sec_since_last_collect = 60*5):
@@ -111,16 +107,27 @@ class BandwidthPsutilCollector(BaseCollector):
     self.dump_data()
     
     # Compute the amount of time above threshold in last week
-    time_above_threshold = 0
+    time_above_threshold_7d = 0
+    time_above_threshold_today = 0
     last_ts = self.stored_data['data'][0][2]
+    
+    # Todays day
+    day_today =  datetime.datetime.fromtimestamp(now).day
+
     for d in self.stored_data['data']:
-      # Did the data point happen in the last week
-      if (now - d[2]) < 7 * 24 * 60 *60:
-        if d[0].endswith('in'):
-          if d[1] > self.STREAM_THRESHOLD:
-            time_above_threshold += (d[2] - last_ts)
+      if d[0].endswith('in'):
+        if d[1] > self.STREAM_THRESHOLD:
+          # Did the data point happen in the last week
+          if (now - d[2]) < 7 * 24 * 60 *60:
+            time_above_threshold_7d += (d[2] - last_ts)
+          
+            # Did the datapoint happen today
+            if day_today == datetime.datetime.fromtimestamp(d[2]).day
+              time_above_threshold_today += (d[2] - last_ts)
+      
       last_ts = d[2]
-    data_points.append((self.METRIC_PREFIX + 'consuming_7d', time_above_threshold, now))
+    data_points.append((self.METRIC_PREFIX + 'consuming_7d', time_above_threshold_7d, now))
+    data_points.append((self.METRIC_PREFIX + 'consuming_today', time_above_threshold_today, now))
     return data_points
 
 
