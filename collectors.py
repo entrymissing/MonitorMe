@@ -135,8 +135,8 @@ class BandwidthNetstatCollector(BandwidthPsutilCollector):
   def pull_data(self):
     netstat = subprocess.Popen(['netstat', '-ibI', 'en0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stat_line = netstat.stdout.readlines()[1]
-    in_bytes = float(stat_line.split()[6])
-    out_bytes = float(stat_line.split()[7])
+    recv_bytes = float(stat_line.split()[6])
+    sent_bytes = float(stat_line.split()[7])
     return sent_bytes, recv_bytes
 
   def setUp(self):
