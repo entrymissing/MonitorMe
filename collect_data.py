@@ -21,6 +21,7 @@ def submitterFunc(metric, data, ts):
   sock.close()
 
 def main(argv):
+  # Argparse
   parser = argparse.ArgumentParser()
   parser.add_argument('-s', '--settings', type=str,
                       help="Settings file to use")
@@ -29,25 +30,34 @@ def main(argv):
   parser.add_argument('--daemon', action='store_true',
                       help="Run as a daemon that collects data every 5 minutes without exiting.")
   args = parser.parse_args()
-  
+
+  # Read settings
   with open(args.settings, 'r') as fp:
     monitors = eval(fp.read())
 
+  # Select the callback reporter function
   if args.dry_run:
     func = printerFunc
   else:
     func = submitterFunc
 
+  # Create the monitors
+  all_monitors = []
+  for mon in monitors:
+    curMon = monitor.Monitor(mon['monitor'],
+                             mon['frequency'],
+                             mon['ts_name'],
+                             mon['config'],
+                             func)
+    all_monitors.append(curMon)
+
+  # Entere the collection loop
   while True:
-    all_monitors = []
-    for mon in monitors:
-      curMon = monitor.Monitor(mon['monitor'],
-                               mon['frequency'],
-                               mon['ts_name'],
-                               mon['config'],
-                               func)
+    # Collect the data
+    for curMon in all_monitors:
       curMon.monitor()
-      
+
+    # In daemon mode sleep and continue. Otherwise we're done.
     if args.daemon:
       time.sleep(5*60)
     else:
