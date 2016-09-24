@@ -1,3 +1,4 @@
+import argparse
 import socket
 import sys
 import time
@@ -20,10 +21,19 @@ def submitterFunc(metric, data, ts):
   sock.close()
 
 def main(argv):
-  with open(argv[0], 'r') as fp:
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-s', '--settings', type=str,
+                      help="Settings file to use")
+  parser.add_argument('--dry_run', action='store_true',
+                      help="If set the collection will only print the data that would have been sent.")
+  parser.add_argument('--daemon', action='store_true',
+                      help="Run as a daemon that collects data every 5 minutes without exiting.")
+  args = parser.parse_args()
+  
+  with open(args.settings, 'r') as fp:
     monitors = eval(fp.read())
 
-  if 'dry' in argv:
+  if args.dry_run:
     func = printerFunc
   else:
     func = submitterFunc
@@ -38,10 +48,10 @@ def main(argv):
                                func)
       curMon.monitor()
       
-    if not 'daemon' in argv:
+    if not args.daemon:
       return
     else:
       time.sleep(5*60)
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main(sys.argv)
