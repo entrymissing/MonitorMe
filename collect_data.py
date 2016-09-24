@@ -45,7 +45,6 @@ def main(argv):
   all_monitors = []
   for mon in monitors:
     curMon = monitor.Monitor(mon['monitor'],
-                             mon['frequency'],
                              mon['ts_name'],
                              mon['config'],
                              func)
