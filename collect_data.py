@@ -48,10 +48,10 @@ def main(argv):
                                func)
       curMon.monitor()
       
-    if not args.daemon:
-      return
-    else:
+    if args.daemon:
       time.sleep(5*60)
+    else:
+      return
 
 if __name__ == '__main__':
   main(sys.argv)
