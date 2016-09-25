@@ -159,15 +159,13 @@ class PingCollector(BaseCollector):
       if raw_line == '':
         break
 
-      m = re.match('([^ ]*)\s* : xmt/rcv/%loss = \d+/\d+/(\d+)%, min/avg/max = (.*)/(.*)/(.*)', raw_line)
+      m = re.match('([^ ]*)\s* : xmt/rcv/%loss = \d+/\d+/(\d+)%, min/avg/max = (.*)/(.*)/(.*)', str(raw_line))
       if m:
-        target = m.group(1).replace('.', '_')
+        target = m.group(1).replace('.', '_')[2:]
         loss = int(m.group(2))
-        min = float(m.group(3))
         avg = float(m.group(4))
-        max = float(m.group(5))
-        data_points.append(['.' + target + '_loss', loss, time.time()])
-        data_points.append(['.' + target + '_avg', avg, time.time()])
+        data_points.append(['.' + str(target) + '_loss', loss, time.time()])
+        data_points.append(['.' + str(target) + '_avg', avg, time.time()])
     return data_points
 
 
