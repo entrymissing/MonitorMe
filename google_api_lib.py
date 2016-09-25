@@ -51,7 +51,8 @@ class memoized(object):
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = ('https://www.googleapis.com/auth/calendar.readonly',
-          'https://www.googleapis.com/auth/gmail.readonly')
+          'https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/fitness.activity.read')
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'MonitorMe'
 
@@ -341,6 +342,21 @@ def get_oldest_inbox_mail():
 
   return [('inbox_oldest', max(thread_age.values()), now)]
   
+def get_workout_stats():
+  service = connect_to_api('fitness', 'v1')
+  now = time.time()
+
+  now = datetime.datetime.utcnow()
+  ndays = now - datetime.timedelta(hours = 24*7)
+  startTime = ndays.isoformat("T") + "Z"
+  response = service.users().sessions().list(userId='me', startTime=startTime).execute()
+
+  numWorkout = len(response['session'])
+  timeWorkout = 0
+  for s in response['session']:
+    timeWorkout += ((int(s['endTimeMillis'])-int(s['startTimeMillis'])) / 1000)
+  
+  return numWorkout, timeWorkout
   
 def main():
   #print(get_oldest_inbox_mail())
@@ -350,7 +366,7 @@ def main():
   #print(time_spent_at_locations())
   #print(time_spent_at_locations(1))
   #print(combined_time_for_query())
-  print(combined_time_for_query(num_days=2))
+  print(get_workout_stats())
 
 if __name__ == '__main__':
   main()

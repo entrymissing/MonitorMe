@@ -199,6 +199,12 @@ class CalendarCollector(BaseCollector):
     
     return data
 
+class GFitCollector(BaseCollector):
+  def collect_data(self):
+    res = google_api_lib.get_workout_stats()
+    data_points = [('.workout.num_7d', res[0], time.time()),
+                   ('.workout.time_7d', res[1], time.time())]
+    return data_points
 
 class EMailCollector(BaseCollector):
   def collect_data(self):
